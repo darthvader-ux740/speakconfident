@@ -120,12 +120,22 @@ IMPORTANT: You MUST analyze the ACTUAL content you hear in the recording. Listen
 - The structure of their message
 - Estimate the duration and word count
 
+PROFICIENCY LEVELS (you MUST assign ONE of these 6 levels based on overall performance):
+
+1. Beginner - Speaks with hesitation. Heavy reliance on notes. Limited structure. Fear is dominant.
+2. Elementary - Can speak for short durations without freezing. Simple structure. Intro, body, close.
+3. Intermediate - Comfortable in familiar settings. Clear structure and transitions. Can answer basic questions.
+4. Upper-Intermediate - Adapts content to audience. Uses examples, pauses, and variation in tone. Handles interruptions and follow-ups.
+5. Advanced - Speaks confidently in high-stakes situations. Strong presence. Minimal reliance on slides or notes. Handles Q&A, objections, and tough audiences.
+6. Mastery - Commanding presence. Effortless delivery. Shapes thinking and decisions. Can improvise, persuade, and inspire consistently.
+
 Return your analysis as a valid JSON object with this exact structure:
 {
   "transcription": "<brief summary or key quotes from what was said>",
   "wordsPerMinute": <estimated WPM as integer>,
   "totalWords": <estimated total word count>,
   "durationSeconds": <estimated duration in seconds>,
+  "proficiencyLevel": "<EXACTLY one of: Beginner, Elementary, Intermediate, Upper-Intermediate, Advanced, Mastery>",
   "voiceModulation": {
     "score": <number 1-10>,
     "voiceClarity": { "score": <number 1-10>, "feedback": "<specific feedback based on what you heard>" },
@@ -148,8 +158,7 @@ Return your analysis as a valid JSON object with this exact structure:
     "confidenceOfPhrasing": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" },
     "grammar": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" }
   },
-  "overallScore": <number 1-10>,
-  "summary": "<2-3 sentence overall assessment referencing specific things from the speech>",
+  "summary": "<2-3 sentence overall assessment referencing specific things from the speech and why they received this proficiency level>",
   "timestampedFeedback": [
     {
       "timeRange": "<e.g., '0:30-0:45'>",
@@ -170,7 +179,15 @@ Return your analysis as a valid JSON object with this exact structure:
   "drillSuggestion": "<one specific practice exercise to improve the most critical development area>"
 }
 
-Scoring guidelines:
+LEVEL ASSIGNMENT GUIDELINES:
+- Beginner (Level 1): Many hesitations, unclear structure, heavy filler usage, monotone, lacks confidence
+- Elementary (Level 2): Can complete short speeches, basic structure exists, moderate fillers, some tonal variation
+- Intermediate (Level 3): Clear structure, good transitions, comfortable delivery, occasional fillers, decent pacing
+- Upper-Intermediate (Level 4): Adapts well, uses pauses effectively, varied tone, minimal fillers, engages audience
+- Advanced (Level 5): Confident presence, excellent structure, handles complexity, very few fillers, persuasive
+- Mastery (Level 6): Commanding presence, effortless delivery, inspiring, virtually no fillers, leadership voice
+
+SCORING SUB-PARAMETERS (1-10):
 - Voice Clarity & Projection: Audibility and steadiness of voice
 - Tonal Variation: Pitch changes to emphasize meaning, avoid monotone
 - Pace & Pauses: Control over speaking speed and effective silence
@@ -191,9 +208,9 @@ STRENGTHS: Identify the top 3 things the speaker did well. Be specific.
 
 DEVELOPMENT AREAS: Identify the top 3 areas that need improvement. Be specific.
 
-DRILL SUGGESTION: Provide ONE specific, actionable practice exercise. E.g., "Practice the 'pause and breathe' technique: Read a paragraph aloud and deliberately pause for 2 seconds after each sentence. This will help reduce your filler words."
+DRILL SUGGESTION: Provide ONE specific, actionable practice exercise.
 
-BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording. Average WPM for conversational speech is 120-150, for presentations 100-130.`
+BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording.`
           },
           {
             role: 'user',
