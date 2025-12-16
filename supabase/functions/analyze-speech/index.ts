@@ -271,16 +271,29 @@ BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording.`
     
     const content = analysisData.choices[0].message.content;
     
-    // Extract JSON from the response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error('Could not extract JSON from:', content);
-      throw new Error('Invalid analysis response format');
+    // Extract and parse JSON from the response with proper error handling
+    let analysis;
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error('No JSON structure found in AI response');
+        console.error('Response length:', content?.length || 0);
+        throw new Error('Invalid analysis response format');
+      }
+      
+      analysis = JSON.parse(jsonMatch[0]);
+      
+      // Validate required fields
+      if (!analysis.proficiencyLevel || !analysis.summary) {
+        throw new Error('Missing required analysis fields');
+      }
+    } catch (parseError) {
+      const parseErrorMessage = parseError instanceof Error ? parseError.message : 'Unknown parse error';
+      console.error('Failed to parse AI response JSON:', parseErrorMessage);
+      throw new Error('Failed to process analysis results');
     }
     
-    const analysis = JSON.parse(jsonMatch[0]);
-    
-    console.log('Analysis complete - Overall score:', analysis.overallScore, 'WPM:', analysis.wordsPerMinute);
+    console.log('Analysis complete - Proficiency:', analysis.proficiencyLevel, 'WPM:', analysis.wordsPerMinute);
     
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
