@@ -1,18 +1,41 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mic2, Target, TrendingUp, ArrowRight } from 'lucide-react';
+import { Mic2, Target, TrendingUp, ArrowRight, LogOut } from 'lucide-react';
 import { VideoUploader } from '@/components/VideoUploader';
 import { AnalysisResults } from '@/components/AnalysisResults';
 import { RankingCriteria } from '@/components/RankingCriteria';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Index() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const { toast } = useToast();
+  const { user, isLoading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to auth if not logged in
+  if (!authLoading && !user) {
+    navigate('/auth');
+    return null;
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   const analyzeMedia = async (base64: string, mimeType: string, fileName: string) => {
     setIsProcessing(true);
@@ -94,6 +117,14 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* User Header */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign out
+        </Button>
+      </div>
+
       {/* Hero Section */}
       <section className="relative gradient-hero text-primary-foreground overflow-hidden">
         <div className="absolute inset-0 opacity-10">

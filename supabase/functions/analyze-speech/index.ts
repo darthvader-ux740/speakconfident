@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // CORS configuration - restrict to known origins
 const getAllowedOrigin = (requestOrigin: string | null): string => {
@@ -44,6 +45,34 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Authentication check
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) {
+    console.error('No authorization header provided');
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized - Please log in to use this feature' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Verify the user with Supabase
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+  if (authError || !user) {
+    console.error('Authentication failed:', authError?.message);
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized - Invalid or expired session' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  console.log('Authenticated user:', user.id);
 
   try {
     const { audio, fileName, mimeType } = await req.json();
