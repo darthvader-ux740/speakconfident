@@ -58,10 +58,14 @@ IMPORTANT: You MUST analyze the ACTUAL content you hear in the recording. Listen
 - How they are saying it (tone, pace, clarity)
 - Any filler words or hesitations
 - The structure of their message
+- Estimate the duration and word count
 
 Return your analysis as a valid JSON object with this exact structure:
 {
   "transcription": "<brief summary or key quotes from what was said>",
+  "wordsPerMinute": <estimated WPM as integer>,
+  "totalWords": <estimated total word count>,
+  "durationSeconds": <estimated duration in seconds>,
   "voiceModulation": {
     "score": <number 1-10>,
     "voiceClarity": { "score": <number 1-10>, "feedback": "<specific feedback based on what you heard>" },
@@ -85,7 +89,25 @@ Return your analysis as a valid JSON object with this exact structure:
     "grammar": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" }
   },
   "overallScore": <number 1-10>,
-  "summary": "<2-3 sentence overall assessment referencing specific things from the speech>"
+  "summary": "<2-3 sentence overall assessment referencing specific things from the speech>",
+  "timestampedFeedback": [
+    {
+      "timeRange": "<e.g., '0:30-0:45'>",
+      "issue": "<what happened at this moment>",
+      "suggestion": "<how to improve>"
+    }
+  ],
+  "strengths": [
+    "<strength 1 - be specific about what they did well>",
+    "<strength 2>",
+    "<strength 3>"
+  ],
+  "developmentAreas": [
+    "<area 1 - be specific about what needs improvement>",
+    "<area 2>",
+    "<area 3>"
+  ],
+  "drillSuggestion": "<one specific practice exercise to improve the most critical development area>"
 }
 
 Scoring guidelines:
@@ -103,14 +125,22 @@ Scoring guidelines:
 - Confidence of Phrasing: Clear, assertive language without excessive hedging
 - Grammar: Correct tenses, verbs, and grammatical structure
 
-BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording.`
+TIMESTAMPED FEEDBACK: Provide 3-5 specific moments with timestamps (estimate based on the recording). Be precise, e.g., "At 0:30-0:45, you stuttered several times when explaining the main concept."
+
+STRENGTHS: Identify the top 3 things the speaker did well. Be specific.
+
+DEVELOPMENT AREAS: Identify the top 3 areas that need improvement. Be specific.
+
+DRILL SUGGESTION: Provide ONE specific, actionable practice exercise. E.g., "Practice the 'pause and breathe' technique: Read a paragraph aloud and deliberately pause for 2 seconds after each sentence. This will help reduce your filler words."
+
+BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording. Average WPM for conversational speech is 120-150, for presentations 100-130.`
           },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: 'Please analyze this speech recording. Listen carefully and provide detailed, specific feedback based on what the speaker actually says and how they say it.'
+                text: 'Please analyze this speech recording. Listen carefully and provide detailed, specific feedback based on what the speaker actually says and how they say it. Include timestamped feedback, WPM, strengths, development areas, and a drill suggestion.'
               },
               {
                 type: 'image_url',
@@ -144,7 +174,7 @@ BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording.`
     
     const analysis = JSON.parse(jsonMatch[0]);
     
-    console.log('Analysis complete - Overall score:', analysis.overallScore);
+    console.log('Analysis complete - Overall score:', analysis.overallScore, 'WPM:', analysis.wordsPerMinute);
     
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

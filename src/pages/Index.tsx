@@ -13,32 +13,16 @@ export default function Index() {
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const { toast } = useToast();
 
-  const handleVideoSelect = async (file: File) => {
+  const analyzeMedia = async (base64: string, mimeType: string, fileName: string) => {
     setIsProcessing(true);
     setIsComplete(false);
     
     try {
-      // Convert video to base64
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => {
-          const result = reader.result as string;
-          // Remove the data URL prefix to get just the base64
-          const base64 = result.split(',')[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-      });
-      reader.readAsDataURL(file);
-      
-      const audioBase64 = await base64Promise;
-      
-      // Call the analyze-speech edge function
       const { data, error } = await supabase.functions.invoke('analyze-speech', {
         body: { 
-          audio: audioBase64,
-          fileName: file.name,
-          mimeType: file.type
+          audio: base64,
+          fileName,
+          mimeType
         }
       });
       
@@ -67,6 +51,38 @@ export default function Index() {
       });
       setIsProcessing(false);
     }
+  };
+
+  const handleVideoSelect = async (file: File) => {
+    const reader = new FileReader();
+    const base64Promise = new Promise<string>((resolve, reject) => {
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+    });
+    reader.readAsDataURL(file);
+    
+    const audioBase64 = await base64Promise;
+    await analyzeMedia(audioBase64, file.type, file.name);
+  };
+
+  const handleAudioRecording = async (blob: Blob) => {
+    const reader = new FileReader();
+    const base64Promise = new Promise<string>((resolve, reject) => {
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+    });
+    reader.readAsDataURL(blob);
+    
+    const audioBase64 = await base64Promise;
+    await analyzeMedia(audioBase64, 'audio/webm', 'recording.webm');
   };
 
   const handleNewAnalysis = () => {
@@ -107,7 +123,7 @@ export default function Index() {
             </h1>
             
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-              Upload your speech video and receive detailed AI-powered feedback on voice modulation, 
+              Upload your speech video or record live and receive detailed AI-powered feedback on voice modulation, 
               thought structure, and vocabulary to elevate your speaking skills.
             </p>
             
@@ -156,16 +172,17 @@ export default function Index() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              Upload Your Speech
+              Analyze Your Speech
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Record yourself speaking and upload the video to receive comprehensive feedback.
+              Upload a video or record yourself speaking to receive comprehensive feedback.
             </p>
           </motion.div>
           
           {!analysisResults ? (
             <VideoUploader
               onVideoSelect={handleVideoSelect}
+              onAudioRecording={handleAudioRecording}
               isProcessing={isProcessing}
               isComplete={isComplete}
             />
@@ -177,7 +194,7 @@ export default function Index() {
             >
               <div className="flex justify-center mb-8">
                 <Button variant="subtle" onClick={handleNewAnalysis}>
-                  ← Analyze Another Video
+                  ← Analyze Another Speech
                 </Button>
               </div>
               <AnalysisResults results={analysisResults} />
