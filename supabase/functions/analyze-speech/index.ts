@@ -1,11 +1,45 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// CORS configuration - restrict to known origins
+const getAllowedOrigin = (requestOrigin: string | null): string => {
+  const allowedOrigins = [
+    Deno.env.get('SUPABASE_URL') || '',
+    'http://localhost:8080',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ].filter(Boolean);
+  
+  // Also allow Lovable preview URLs
+  if (requestOrigin && (
+    requestOrigin.includes('.lovableproject.com') ||
+    requestOrigin.includes('.lovable.app') ||
+    allowedOrigins.includes(requestOrigin)
+  )) {
+    return requestOrigin;
+  }
+  
+  return allowedOrigins[0] || '*';
 };
 
+// Input validation constants
+const MAX_FILE_SIZE_MB = 100;
+const ALLOWED_MIME_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'audio/webm',
+  'audio/mp4',
+  'audio/m4a',
+  'audio/mpeg',
+  'audio/wav',
+];
+
 serve(async (req) => {
+  const origin = req.headers.get('Origin');
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': getAllowedOrigin(origin),
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -14,11 +48,37 @@ serve(async (req) => {
   try {
     const { audio, fileName, mimeType } = await req.json();
     
-    if (!audio) {
+    // Input validation
+    if (!audio || typeof audio !== 'string') {
       throw new Error('No audio/video data provided');
     }
 
-    console.log('Received file:', fileName, 'Type:', mimeType);
+    if (!mimeType || typeof mimeType !== 'string') {
+      throw new Error('MIME type is required');
+    }
+
+    // Validate MIME type
+    if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+      throw new Error(`Invalid file type "${mimeType}". Supported types: ${ALLOWED_MIME_TYPES.join(', ')}`);
+    }
+
+    // Validate file size (base64 is ~4/3 larger than original)
+    const estimatedSizeBytes = (audio.length * 3) / 4;
+    const estimatedSizeMB = estimatedSizeBytes / (1024 * 1024);
+    if (estimatedSizeMB > MAX_FILE_SIZE_MB) {
+      throw new Error(`File too large (${estimatedSizeMB.toFixed(1)}MB). Maximum size is ${MAX_FILE_SIZE_MB}MB`);
+    }
+
+    // Basic base64 format validation
+    const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+    if (!base64Regex.test(audio)) {
+      throw new Error('Invalid base64 data format');
+    }
+
+    // Sanitize filename for logging
+    const sanitizedFileName = fileName ? String(fileName).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100) : 'unknown';
+    
+    console.log('Received file:', sanitizedFileName, 'Type:', mimeType, 'Size:', estimatedSizeMB.toFixed(2), 'MB');
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
