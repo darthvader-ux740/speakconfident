@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
-import { Mic, Brain, BookOpen, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Lightbulb, Clock } from 'lucide-react';
+import { Mic, Brain, BookOpen, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Lightbulb, Clock, Award } from 'lucide-react';
 import { useState } from 'react';
-import { ScoreGauge } from './ScoreGauge';
 import { cn } from '@/lib/utils';
+import { PROFICIENCY_LEVELS } from './RankingCriteria';
 
 interface SubParameter {
   name: string;
@@ -22,6 +22,8 @@ interface TimestampedFeedback {
   issue: string;
   suggestion: string;
 }
+
+export type ProficiencyLevel = 'Beginner' | 'Elementary' | 'Intermediate' | 'Upper-Intermediate' | 'Advanced' | 'Mastery';
 
 interface AnalysisResultsProps {
   results: {
@@ -47,7 +49,7 @@ interface AnalysisResultsProps {
       confidenceOfPhrasing: { score: number; feedback: string };
       grammar: { score: number; feedback: string };
     };
-    overallScore: number;
+    proficiencyLevel: ProficiencyLevel;
     summary: string;
     wordsPerMinute?: number;
     totalWords?: number;
@@ -89,7 +91,14 @@ function CategoryCard({ category, delay }: { category: Category; delay: number }
         </div>
         
         <div className="flex items-center gap-4">
-          <ScoreGauge score={category.score} label="" size="sm" delay={delay + 0.2} />
+          <div className={cn(
+            "text-2xl font-display font-bold",
+            category.score >= 8 ? "text-success" :
+            category.score >= 6 ? "text-gold" :
+            category.score >= 4 ? "text-warning" : "text-destructive"
+          )}>
+            {category.score.toFixed(1)}
+          </div>
           {isExpanded ? (
             <ChevronUp className="w-5 h-5 text-muted-foreground" />
           ) : (
@@ -174,9 +183,11 @@ export function AnalysisResults({ results }: AnalysisResultsProps) {
     },
   ];
 
+  const levelData = PROFICIENCY_LEVELS.find(l => l.name === results.proficiencyLevel) || PROFICIENCY_LEVELS[0];
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
-      {/* Overall Score */}
+      {/* Proficiency Level */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -184,9 +195,39 @@ export function AnalysisResults({ results }: AnalysisResultsProps) {
         className="text-center py-8"
       >
         <h2 className="text-2xl font-display font-semibold text-foreground mb-6">
-          Overall Speaking Score
+          Your Speaking Level
         </h2>
-        <ScoreGauge score={results.overallScore} label="out of 10" size="lg" delay={0.2} />
+        
+        {/* Level Badge */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2, type: 'spring' }}
+          className="inline-flex flex-col items-center"
+        >
+          <div className={`w-24 h-24 rounded-full ${levelData.badgeColor} flex items-center justify-center mb-4 shadow-lg`}>
+            <Award className="w-12 h-12 text-white" />
+          </div>
+          <span className="text-3xl font-display font-bold text-foreground">
+            {results.proficiencyLevel}
+          </span>
+          <span className="text-sm text-muted-foreground mt-1">
+            Level {levelData.level} of 6
+          </span>
+        </motion.div>
+        
+        {/* Level Description */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className={`mt-6 p-4 rounded-xl border max-w-lg mx-auto ${levelData.color}`}
+        >
+          <p className="text-sm">{levelData.description}</p>
+          <p className="text-xs mt-2">
+            <span className="font-semibold">Focus: </span>{levelData.focus}
+          </p>
+        </motion.div>
         
         {/* WPM Stats */}
         {results.wordsPerMinute && (
@@ -194,7 +235,7 @@ export function AnalysisResults({ results }: AnalysisResultsProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="flex justify-center gap-8 mt-6"
+            className="flex flex-wrap justify-center gap-4 mt-6"
           >
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted">
               <Clock className="w-4 h-4 text-gold" />

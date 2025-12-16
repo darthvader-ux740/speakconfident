@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Mic2, Target, TrendingUp, ArrowRight } from 'lucide-react';
 import { VideoUploader } from '@/components/VideoUploader';
 import { AnalysisResults } from '@/components/AnalysisResults';
+import { RankingCriteria } from '@/components/RankingCriteria';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -202,6 +203,9 @@ export default function Index() {
           )}
         </div>
       </section>
+
+      {/* Ranking Criteria Section */}
+      <RankingCriteria />
       
       {/* Footer */}
       <footer className="border-t border-border py-8">
