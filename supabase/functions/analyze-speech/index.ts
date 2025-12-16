@@ -5,36 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Process base64 in chunks to prevent memory issues
-function processBase64Chunks(base64String: string, chunkSize = 32768) {
-  const chunks: Uint8Array[] = [];
-  let position = 0;
-  
-  while (position < base64String.length) {
-    const chunk = base64String.slice(position, position + chunkSize);
-    const binaryChunk = atob(chunk);
-    const bytes = new Uint8Array(binaryChunk.length);
-    
-    for (let i = 0; i < binaryChunk.length; i++) {
-      bytes[i] = binaryChunk.charCodeAt(i);
-    }
-    
-    chunks.push(bytes);
-    position += chunkSize;
-  }
-
-  const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  return result;
-}
-
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -45,123 +15,31 @@ serve(async (req) => {
     const { audio, fileName, mimeType } = await req.json();
     
     if (!audio) {
-      throw new Error('No audio data provided');
+      throw new Error('No audio/video data provided');
     }
 
     console.log('Received file:', fileName, 'Type:', mimeType);
 
-    // Step 1: Convert audio to text using Whisper-compatible API
-    // For video files, we'll send the audio track
-    const binaryAudio = processBase64Chunks(audio);
-    
-    const formData = new FormData();
-    const blob = new Blob([binaryAudio], { type: mimeType || 'audio/webm' });
-    formData.append('file', blob, fileName || 'audio.webm');
-    formData.append('model', 'whisper-1');
-    formData.append('language', 'en');
-
-    console.log('Sending to transcription API...');
-
-    // Use OpenAI Whisper for transcription
-    const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
-      },
-      body: formData,
-    });
-
-    let transcribedText = '';
-    
-    if (!transcriptionResponse.ok) {
-      // If Whisper fails, try using Gemini with audio
-      console.log('Whisper API not available, using Gemini for analysis...');
-      
-      // For demo purposes, we'll use the AI to simulate analysis
-      // In production, you'd want a proper speech-to-text service
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      
-      const analysisResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            {
-              role: 'system',
-              content: `You are an expert public speaking coach analyzing a speech. Generate a realistic and helpful analysis based on common speech patterns. Provide detailed, constructive feedback.
-
-Return your analysis as a valid JSON object with this exact structure:
-{
-  "voiceModulation": {
-    "score": <number 1-10>,
-    "voiceClarity": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "tonalVariation": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "paceAndPauses": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "fillersAndVerbalHabits": { "score": <number 1-10>, "feedback": "<specific feedback>" }
-  },
-  "thoughtStructure": {
-    "score": <number 1-10>,
-    "purposeArticulation": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "logicalFlow": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "signposting": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "closureStrength": { "score": <number 1-10>, "feedback": "<specific feedback>" }
-  },
-  "vocabulary": {
-    "score": <number 1-10>,
-    "sentenceEconomy": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "specificity": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "redundancyControl": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "confidenceOfPhrasing": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "grammar": { "score": <number 1-10>, "feedback": "<specific feedback>" }
-  },
-  "overallScore": <number 1-10>,
-  "summary": "<2-3 sentence overall assessment with key strengths and areas for improvement>"
-}
-
-Make the scores realistic and varied (not all the same). Provide actionable, specific feedback.`
-            },
-            {
-              role: 'user',
-              content: 'Analyze this speech video and provide detailed feedback on the speaker\'s public speaking skills. Evaluate voice modulation, thought structure, and vocabulary based on common patterns you would expect to see. Provide constructive and helpful feedback.'
-            }
-          ],
-        }),
-      });
-
-      if (!analysisResponse.ok) {
-        const errorText = await analysisResponse.text();
-        console.error('AI analysis error:', errorText);
-        throw new Error('Failed to analyze speech');
-      }
-
-      const analysisData = await analysisResponse.json();
-      const content = analysisData.choices[0].message.content;
-      
-      // Extract JSON from the response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('Invalid analysis response format');
-      }
-      
-      const analysis = JSON.parse(jsonMatch[0]);
-      
-      return new Response(JSON.stringify(analysis), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    const transcriptionData = await transcriptionResponse.json();
-    transcribedText = transcriptionData.text;
+    // Use Gemini's multimodal capabilities to analyze the video/audio directly
+    console.log('Sending video to Gemini for analysis...');
     
-    console.log('Transcription complete. Analyzing speech...');
+    // Determine the correct mime type for Gemini
+    let geminiMimeType = mimeType;
+    if (mimeType === 'video/mp4') {
+      geminiMimeType = 'video/mp4';
+    } else if (mimeType === 'video/webm') {
+      geminiMimeType = 'video/webm';
+    } else if (mimeType === 'audio/webm') {
+      geminiMimeType = 'audio/webm';
+    } else if (mimeType === 'audio/mp4' || mimeType === 'audio/m4a') {
+      geminiMimeType = 'audio/mp4';
+    }
 
-    // Step 2: Analyze the transcribed text with AI
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    
     const analysisResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -169,45 +47,52 @@ Make the scores realistic and varied (not all the same). Provide actionable, spe
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
+        model: 'google/gemini-2.5-flash',
         messages: [
           {
             role: 'system',
-            content: `You are an expert public speaking coach. Analyze the following speech transcript and evaluate it on the specified parameters. Be constructive and specific in your feedback.
+            content: `You are an expert public speaking coach. You will analyze a video/audio recording of a speech and evaluate the speaker's performance.
+
+IMPORTANT: You MUST analyze the ACTUAL content you hear in the recording. Listen carefully to:
+- What the speaker is actually saying
+- How they are saying it (tone, pace, clarity)
+- Any filler words or hesitations
+- The structure of their message
 
 Return your analysis as a valid JSON object with this exact structure:
 {
+  "transcription": "<brief summary or key quotes from what was said>",
   "voiceModulation": {
     "score": <number 1-10>,
-    "voiceClarity": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "tonalVariation": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "paceAndPauses": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "fillersAndVerbalHabits": { "score": <number 1-10>, "feedback": "<specific feedback>" }
+    "voiceClarity": { "score": <number 1-10>, "feedback": "<specific feedback based on what you heard>" },
+    "tonalVariation": { "score": <number 1-10>, "feedback": "<specific feedback based on what you heard>" },
+    "paceAndPauses": { "score": <number 1-10>, "feedback": "<specific feedback based on what you heard>" },
+    "fillersAndVerbalHabits": { "score": <number 1-10>, "feedback": "<specific feedback - mention actual fillers you heard>" }
   },
   "thoughtStructure": {
     "score": <number 1-10>,
-    "purposeArticulation": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "logicalFlow": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "signposting": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "closureStrength": { "score": <number 1-10>, "feedback": "<specific feedback>" }
+    "purposeArticulation": { "score": <number 1-10>, "feedback": "<specific feedback based on content>" },
+    "logicalFlow": { "score": <number 1-10>, "feedback": "<specific feedback based on content>" },
+    "signposting": { "score": <number 1-10>, "feedback": "<specific feedback based on content>" },
+    "closureStrength": { "score": <number 1-10>, "feedback": "<specific feedback based on content>" }
   },
   "vocabulary": {
     "score": <number 1-10>,
-    "sentenceEconomy": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "specificity": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "redundancyControl": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "confidenceOfPhrasing": { "score": <number 1-10>, "feedback": "<specific feedback>" },
-    "grammar": { "score": <number 1-10>, "feedback": "<specific feedback>" }
+    "sentenceEconomy": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" },
+    "specificity": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" },
+    "redundancyControl": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" },
+    "confidenceOfPhrasing": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" },
+    "grammar": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" }
   },
   "overallScore": <number 1-10>,
-  "summary": "<2-3 sentence overall assessment with key strengths and areas for improvement>"
+  "summary": "<2-3 sentence overall assessment referencing specific things from the speech>"
 }
 
 Scoring guidelines:
 - Voice Clarity & Projection: Audibility and steadiness of voice
 - Tonal Variation: Pitch changes to emphasize meaning, avoid monotone
 - Pace & Pauses: Control over speaking speed and effective silence
-- Fillers & Verbal Habits: Frequency of "um", "uh", repetitive phrases
+- Fillers & Verbal Habits: Frequency of "um", "uh", "like", "you know", repetitive phrases
 - Purpose Articulation: How clearly the objective is stated upfront
 - Logical Flow: Ideas progress coherently and easy to follow
 - Signposting: Explicit cues that help track where the talk is going
@@ -218,11 +103,22 @@ Scoring guidelines:
 - Confidence of Phrasing: Clear, assertive language without excessive hedging
 - Grammar: Correct tenses, verbs, and grammatical structure
 
-Make scores realistic and varied. Provide actionable feedback.`
+BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording.`
           },
           {
             role: 'user',
-            content: `Analyze this speech transcript:\n\n"${transcribedText}"\n\nProvide detailed evaluation and feedback.`
+            content: [
+              {
+                type: 'text',
+                text: 'Please analyze this speech recording. Listen carefully and provide detailed, specific feedback based on what the speaker actually says and how they say it.'
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${geminiMimeType};base64,${audio}`
+                }
+              }
+            ]
           }
         ],
       }),
@@ -230,22 +126,25 @@ Make scores realistic and varied. Provide actionable feedback.`
 
     if (!analysisResponse.ok) {
       const errorText = await analysisResponse.text();
-      console.error('AI analysis error:', errorText);
-      throw new Error('Failed to analyze speech');
+      console.error('AI analysis error:', analysisResponse.status, errorText);
+      throw new Error(`Failed to analyze speech: ${errorText}`);
     }
 
     const analysisData = await analysisResponse.json();
+    console.log('Received AI response');
+    
     const content = analysisData.choices[0].message.content;
     
     // Extract JSON from the response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.error('Could not extract JSON from:', content);
       throw new Error('Invalid analysis response format');
     }
     
     const analysis = JSON.parse(jsonMatch[0]);
     
-    console.log('Analysis complete');
+    console.log('Analysis complete - Overall score:', analysis.overallScore);
     
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
