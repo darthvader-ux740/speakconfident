@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Mic, Brain, BookOpen, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Lightbulb, Clock, Award } from 'lucide-react';
+import { Mic, Brain, BookOpen, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Lightbulb, Clock, Award, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { PROFICIENCY_LEVELS } from './RankingCriteria';
@@ -8,6 +8,15 @@ interface SubParameter {
   name: string;
   score: number;
   feedback: string;
+  strengths?: string;
+  developmentAreas?: string;
+}
+
+interface Mispronunciation {
+  word: string;
+  timestamp: string;
+  issue: string;
+  correctPronunciation?: string;
 }
 
 interface Category {
@@ -25,32 +34,41 @@ interface TimestampedFeedback {
 
 export type ProficiencyLevel = 'Beginner' | 'Elementary' | 'Intermediate' | 'Upper-Intermediate' | 'Advanced' | 'Mastery';
 
+interface SubParameterData {
+  score: number;
+  feedback: string;
+  strengths?: string;
+  developmentAreas?: string;
+}
+
 interface AnalysisResultsProps {
   results: {
     voiceModulation: {
       score: number;
-      voiceClarity: { score: number; feedback: string };
-      tonalVariation: { score: number; feedback: string };
-      paceAndPauses: { score: number; feedback: string };
-      fillersAndVerbalHabits: { score: number; feedback: string };
+      voiceClarity: SubParameterData;
+      tonalVariation: SubParameterData;
+      paceAndPauses: SubParameterData;
+      fillersAndVerbalHabits: SubParameterData;
     };
     thoughtStructure: {
       score: number;
-      purposeArticulation: { score: number; feedback: string };
-      logicalFlow: { score: number; feedback: string };
-      signposting: { score: number; feedback: string };
-      closureStrength: { score: number; feedback: string };
+      purposeArticulation: SubParameterData;
+      logicalFlow: SubParameterData;
+      signposting: SubParameterData;
+      closureStrength: SubParameterData;
     };
     vocabulary: {
       score: number;
-      sentenceEconomy: { score: number; feedback: string };
-      specificity: { score: number; feedback: string };
-      redundancyControl: { score: number; feedback: string };
-      confidenceOfPhrasing: { score: number; feedback: string };
-      grammar: { score: number; feedback: string };
+      sentenceEconomy: SubParameterData;
+      specificity: SubParameterData;
+      redundancyControl: SubParameterData;
+      confidenceOfPhrasing: SubParameterData;
+      grammar: SubParameterData;
     };
     proficiencyLevel: ProficiencyLevel;
     summary: string;
+    fullTranscript?: string;
+    mispronunciations?: Mispronunciation[];
     wordsPerMinute?: number;
     totalWords?: number;
     durationSeconds?: number;
@@ -59,6 +77,55 @@ interface AnalysisResultsProps {
     developmentAreas?: string[];
     drillSuggestion?: string;
   };
+}
+
+// Helper component to highlight mispronounced words in transcript
+function TranscriptWithHighlights({ 
+  transcript, 
+  mispronunciations 
+}: { 
+  transcript: string; 
+  mispronunciations: Mispronunciation[] 
+}) {
+  if (mispronunciations.length === 0) {
+    return (
+      <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+        {transcript}
+      </p>
+    );
+  }
+
+  // Create a set of mispronounced words (lowercase for matching)
+  const mispronounceMap = new Map<string, Mispronunciation>();
+  mispronunciations.forEach(mp => {
+    mispronounceMap.set(mp.word.toLowerCase(), mp);
+  });
+
+  // Split transcript into words while preserving whitespace and punctuation
+  const parts = transcript.split(/(\s+)/);
+  
+  return (
+    <p className="text-foreground leading-relaxed">
+      {parts.map((part, idx) => {
+        // Clean the word for matching (remove punctuation)
+        const cleanWord = part.replace(/[.,!?;:'"()[\]{}]/g, '').toLowerCase();
+        const mispronunciation = mispronounceMap.get(cleanWord);
+        
+        if (mispronunciation) {
+          return (
+            <span 
+              key={idx} 
+              className="text-destructive font-semibold bg-destructive/10 px-0.5 rounded cursor-help"
+              title={`${mispronunciation.issue}${mispronunciation.correctPronunciation ? ` - Correct: ${mispronunciation.correctPronunciation}` : ''}`}
+            >
+              {part}
+            </span>
+          );
+        }
+        return <span key={idx}>{part}</span>;
+      })}
+    </p>
+  );
 }
 
 function CategoryCard({ category, delay }: { category: Category; delay: number }) {
@@ -121,22 +188,48 @@ function CategoryCard({ category, delay }: { category: Category; delay: number }
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: delay + 0.3 + idx * 0.1 }}
-              className="flex items-start gap-4 p-4 rounded-xl bg-muted/30"
+              className="p-4 rounded-xl bg-muted/30"
             >
-              <div className="flex-shrink-0 w-12 text-center">
-                <span className={cn(
-                  "text-2xl font-display font-bold",
-                  param.score >= 8 ? "text-success" :
-                  param.score >= 6 ? "text-gold" :
-                  param.score >= 4 ? "text-warning" : "text-destructive"
-                )}>
-                  {param.score.toFixed(1)}
-                </span>
+              <div className="flex items-start gap-4 mb-3">
+                <div className="flex-shrink-0 w-12 text-center">
+                  <span className={cn(
+                    "text-2xl font-display font-bold",
+                    param.score >= 8 ? "text-success" :
+                    param.score >= 6 ? "text-gold" :
+                    param.score >= 4 ? "text-warning" : "text-destructive"
+                  )}>
+                    {param.score.toFixed(1)}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-foreground mb-1">{param.name}</h4>
+                  <p className="text-sm text-muted-foreground">{param.feedback}</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h4 className="font-medium text-foreground mb-1">{param.name}</h4>
-                <p className="text-sm text-muted-foreground">{param.feedback}</p>
-              </div>
+              
+              {/* Strengths & Development Areas for this sub-parameter */}
+              {(param.strengths || param.developmentAreas) && (
+                <div className="ml-16 mt-3 space-y-2">
+                  {param.strengths && (
+                    <div className="p-3 rounded-lg bg-success/5 border border-success/20">
+                      <div className="flex items-center gap-2 mb-1">
+                        <TrendingUp className="w-3.5 h-3.5 text-success" />
+                        <span className="text-xs font-semibold text-success uppercase tracking-wide">Strengths</span>
+                      </div>
+                      <p className="text-sm text-foreground italic">"{param.strengths}"</p>
+                    </div>
+                  )}
+                  {param.developmentAreas && (
+                    <div className="p-3 rounded-lg bg-warning/5 border border-warning/20">
+                      <div className="flex items-center gap-2 mb-1">
+                        <AlertCircle className="w-3.5 h-3.5 text-warning" />
+                        <span className="text-xs font-semibold text-warning uppercase tracking-wide">Areas to Improve</span>
+                      </div>
+                      <p className="text-sm text-foreground italic">"{param.developmentAreas}"</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
@@ -271,6 +364,70 @@ export function AnalysisResults({ results }: AnalysisResultsProps) {
           {results.summary}
         </motion.p>
       </motion.div>
+      
+      {/* Full Transcript with Mispronunciations */}
+      {results.fullTranscript && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="bg-card rounded-2xl border border-border shadow-card overflow-hidden"
+        >
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <h3 className="text-xl font-display font-semibold text-foreground">
+                  Full Transcript
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {results.mispronunciations && results.mispronunciations.length > 0 
+                    ? `${results.mispronunciations.length} pronunciation issue${results.mispronunciations.length > 1 ? 's' : ''} highlighted in red`
+                    : 'No pronunciation issues detected'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="p-6">
+            <TranscriptWithHighlights 
+              transcript={results.fullTranscript} 
+              mispronunciations={results.mispronunciations || []} 
+            />
+          </div>
+          
+          {/* Mispronunciation Details */}
+          {results.mispronunciations && results.mispronunciations.length > 0 && (
+            <div className="px-6 pb-6">
+              <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-destructive" />
+                Pronunciation Issues
+              </h4>
+              <div className="space-y-2">
+                {results.mispronunciations.map((mp, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                    <span className="flex-shrink-0 px-2 py-0.5 rounded bg-destructive/10 text-destructive text-xs font-mono">
+                      {mp.timestamp}
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-sm">
+                        <span className="font-semibold text-destructive">"{mp.word}"</span>
+                        <span className="text-muted-foreground"> — {mp.issue}</span>
+                      </p>
+                      {mp.correctPronunciation && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Correct: <span className="text-success font-medium">{mp.correctPronunciation}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
       
       {/* Strengths & Development Areas */}
       {(results.strengths?.length || results.developmentAreas?.length) && (

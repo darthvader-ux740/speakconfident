@@ -160,32 +160,105 @@ PROFICIENCY LEVELS (you MUST assign ONE of these 6 levels based on overall perfo
 
 Return your analysis as a valid JSON object with this exact structure:
 {
-  "transcription": "<brief summary or key quotes from what was said>",
+  "fullTranscript": "<the COMPLETE word-for-word transcript of what was said>",
+  "mispronunciations": [
+    {
+      "word": "<the mispronounced word>",
+      "timestamp": "<approximate time e.g., '0:15'>",
+      "issue": "<what was wrong - e.g., 'slurred', 'unclear pronunciation', 'wrong emphasis'>",
+      "correctPronunciation": "<how it should be pronounced>"
+    }
+  ],
   "wordsPerMinute": <estimated WPM as integer>,
   "totalWords": <estimated total word count>,
   "durationSeconds": <estimated duration in seconds>,
   "proficiencyLevel": "<EXACTLY one of: Beginner, Elementary, Intermediate, Upper-Intermediate, Advanced, Mastery>",
   "voiceModulation": {
     "score": <number 1-10>,
-    "voiceClarity": { "score": <number 1-10>, "feedback": "<specific feedback based on what you heard>" },
-    "tonalVariation": { "score": <number 1-10>, "feedback": "<specific feedback based on what you heard>" },
-    "paceAndPauses": { "score": <number 1-10>, "feedback": "<specific feedback based on what you heard>" },
-    "fillersAndVerbalHabits": { "score": <number 1-10>, "feedback": "<specific feedback - mention actual fillers you heard>" }
+    "voiceClarity": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback based on what you heard>",
+      "strengths": "<what they did well for this specific parameter - quote exact words/phrases from speech with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact words/phrases from speech with timestamps>"
+    },
+    "tonalVariation": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact words/phrases with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact words/phrases with timestamps>"
+    },
+    "paceAndPauses": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact words/phrases with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact words/phrases with timestamps>"
+    },
+    "fillersAndVerbalHabits": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback - mention actual fillers you heard>",
+      "strengths": "<what they did well - quote exact words/phrases with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact fillers with timestamps>"
+    }
   },
   "thoughtStructure": {
     "score": <number 1-10>,
-    "purposeArticulation": { "score": <number 1-10>, "feedback": "<specific feedback based on content>" },
-    "logicalFlow": { "score": <number 1-10>, "feedback": "<specific feedback based on content>" },
-    "signposting": { "score": <number 1-10>, "feedback": "<specific feedback based on content>" },
-    "closureStrength": { "score": <number 1-10>, "feedback": "<specific feedback based on content>" }
+    "purposeArticulation": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact words/phrases with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact words/phrases with timestamps>"
+    },
+    "logicalFlow": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact words/phrases with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact words/phrases with timestamps>"
+    },
+    "signposting": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact words/phrases with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact words/phrases with timestamps>"
+    },
+    "closureStrength": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact words/phrases with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact words/phrases with timestamps>"
+    }
   },
   "vocabulary": {
     "score": <number 1-10>,
-    "sentenceEconomy": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" },
-    "specificity": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" },
-    "redundancyControl": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" },
-    "confidenceOfPhrasing": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" },
-    "grammar": { "score": <number 1-10>, "feedback": "<specific feedback with examples>" }
+    "sentenceEconomy": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact sentences with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact sentences with timestamps>"
+    },
+    "specificity": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact words/phrases with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact vague phrases with timestamps>"
+    },
+    "redundancyControl": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact words/phrases with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact redundant phrases with timestamps>"
+    },
+    "confidenceOfPhrasing": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact confident phrases with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact hedging phrases with timestamps>"
+    },
+    "grammar": { 
+      "score": <number 1-10>, 
+      "feedback": "<specific feedback>",
+      "strengths": "<what they did well - quote exact correct usage with timestamps>",
+      "developmentAreas": "<what needs improvement - quote exact grammar errors with timestamps>"
+    }
   },
   "summary": "<2-3 sentence overall assessment referencing specific things from the speech and why they received this proficiency level>",
   "timestampedFeedback": [
