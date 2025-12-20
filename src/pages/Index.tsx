@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mic2, Target, TrendingUp, ArrowRight, LogOut } from 'lucide-react';
+import { Mic2, Target, TrendingUp, ArrowRight, LogOut, User } from 'lucide-react';
 import { VideoUploader } from '@/components/VideoUploader';
 import { AnalysisResults } from '@/components/AnalysisResults';
 import { AnalysisHistory } from '@/components/AnalysisHistory';
@@ -139,7 +139,11 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* User Header */}
-      <div className="absolute top-4 right-4 z-50">
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/profile')} className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
+          <User className="w-4 h-4 mr-2" />
+          Profile
+        </Button>
         <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
           <LogOut className="w-4 h-4 mr-2" />
           Sign out

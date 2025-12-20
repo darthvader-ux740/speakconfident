@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       speech_analyses: {
         Row: {
           categories: Json
