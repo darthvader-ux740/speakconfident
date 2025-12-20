@@ -57,9 +57,9 @@ const Profile = () => {
       .from('profiles')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error fetching profile:', error);
       return;
     }
@@ -95,11 +95,11 @@ const Profile = () => {
             month: 'short', 
             day: 'numeric' 
           }),
-          voiceClarity: categories?.voiceClarity?.score || 0,
-          speechStructure: categories?.speechStructure?.score || 0,
+          voiceClarity: categories?.voiceModulation?.voiceClarity?.score || categories?.voiceModulation?.score || 0,
+          speechStructure: categories?.thoughtStructure?.score || 0,
           vocabulary: categories?.vocabulary?.score || 0,
-          audienceConnection: categories?.audienceConnection?.score || 0,
-          emotionalDelivery: categories?.emotionalDelivery?.score || 0,
+          audienceConnection: categories?.thoughtStructure?.logicalFlow?.score || 0,
+          emotionalDelivery: categories?.voiceModulation?.tonalVariation?.score || 0,
           overall: analysis.overall_score,
         };
       });
