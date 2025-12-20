@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Square, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { TopicGenerator } from '@/components/TopicGenerator';
 
 interface AudioRecorderProps {
   onRecordingComplete: (blob: Blob) => void;
@@ -16,6 +16,7 @@ export function AudioRecorder({ onRecordingComplete, isProcessing, isComplete }:
   const [hasRecording, setHasRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -106,6 +107,9 @@ export function AudioRecorder({ onRecordingComplete, isProcessing, isComplete }:
             className="border-2 border-dashed rounded-2xl p-12 border-border hover:border-gold/50 hover:bg-muted/30 transition-all duration-300"
           >
             <div className="flex flex-col items-center gap-6 text-center">
+              {/* Topic Generator */}
+              <TopicGenerator onTopicSelect={setSelectedTopic} />
+              
               <motion.div
                 className="w-24 h-24 rounded-full bg-gold/10 flex items-center justify-center cursor-pointer hover:bg-gold/20 transition-colors"
                 whileHover={{ scale: 1.05 }}
@@ -120,7 +124,7 @@ export function AudioRecorder({ onRecordingComplete, isProcessing, isComplete }:
                   Record Your Speech
                 </h3>
                 <p className="text-muted-foreground">
-                  Click the microphone to start recording
+                  {selectedTopic ? "Now record yourself speaking about the topic above" : "Click the microphone to start recording, or generate a topic first"}
                 </p>
                 <p className="text-sm text-muted-foreground/70 mt-2">
                   Speak clearly into your microphone

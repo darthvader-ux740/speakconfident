@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      speech_analyses: {
+        Row: {
+          categories: Json
+          created_at: string
+          full_transcript: string | null
+          id: string
+          mispronunciations: Json | null
+          overall_score: number
+          user_id: string
+        }
+        Insert: {
+          categories: Json
+          created_at?: string
+          full_transcript?: string | null
+          id?: string
+          mispronunciations?: Json | null
+          overall_score: number
+          user_id: string
+        }
+        Update: {
+          categories?: Json
+          created_at?: string
+          full_transcript?: string | null
+          id?: string
+          mispronunciations?: Json | null
+          overall_score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
