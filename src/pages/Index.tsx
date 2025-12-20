@@ -62,12 +62,22 @@ export default function Index() {
       
       // Save analysis to history
       try {
+        // Calculate overall score from the three main categories
+        const voiceScore = data.voiceModulation?.score || 0;
+        const structureScore = data.thoughtStructure?.score || 0;
+        const vocabScore = data.vocabulary?.score || 0;
+        const overallScore = Math.round((voiceScore + structureScore + vocabScore) / 3 * 10) / 10;
+        
         const { error: saveError } = await supabase.from('speech_analyses').insert({
           user_id: user?.id,
-          overall_score: data.overallScore,
+          overall_score: overallScore,
           full_transcript: data.fullTranscript || null,
           mispronunciations: data.mispronunciations || [],
-          categories: data.categories,
+          categories: {
+            voiceModulation: data.voiceModulation,
+            thoughtStructure: data.thoughtStructure,
+            vocabulary: data.vocabulary,
+          },
         });
         
         if (saveError) {
