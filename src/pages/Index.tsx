@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mic2, Target, TrendingUp, ArrowRight, LogOut } from 'lucide-react';
 import { VideoUploader } from '@/components/VideoUploader';
 import { AnalysisResults } from '@/components/AnalysisResults';
+import { AnalysisHistory } from '@/components/AnalysisHistory';
 import { RankingCriteria } from '@/components/RankingCriteria';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +15,7 @@ export default function Index() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [historyRefresh, setHistoryRefresh] = useState(0);
   const { toast } = useToast();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -56,6 +58,25 @@ export default function Index() {
       
       if (data.error) {
         throw new Error(data.error);
+      }
+      
+      // Save analysis to history
+      try {
+        const { error: saveError } = await supabase.from('speech_analyses').insert({
+          user_id: user?.id,
+          overall_score: data.overallScore,
+          full_transcript: data.fullTranscript || null,
+          mispronunciations: data.mispronunciations || [],
+          categories: data.categories,
+        });
+        
+        if (saveError) {
+          console.error('Error saving analysis:', saveError);
+        } else {
+          setHistoryRefresh(prev => prev + 1);
+        }
+      } catch (e) {
+        console.error('Error saving analysis:', e);
       }
       
       setAnalysisResults(data);
@@ -210,6 +231,12 @@ export default function Index() {
               Upload a video or record yourself speaking to receive comprehensive feedback.
             </p>
           </motion.div>
+          
+          {/* Analysis History */}
+          <AnalysisHistory 
+            onSelectAnalysis={setAnalysisResults} 
+            refreshTrigger={historyRefresh}
+          />
           
           {!analysisResults ? (
             <VideoUploader
