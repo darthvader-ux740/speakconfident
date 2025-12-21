@@ -77,6 +77,15 @@ export default function Index() {
             voiceModulation: data.voiceModulation,
             thoughtStructure: data.thoughtStructure,
             vocabulary: data.vocabulary,
+            proficiencyLevel: data.proficiencyLevel,
+            summary: data.summary,
+            wordsPerMinute: data.wordsPerMinute,
+            totalWords: data.totalWords,
+            durationSeconds: data.durationSeconds,
+            timestampedFeedback: data.timestampedFeedback,
+            strengths: data.strengths,
+            developmentAreas: data.developmentAreas,
+            drillSuggestion: data.drillSuggestion,
           },
         });
         
