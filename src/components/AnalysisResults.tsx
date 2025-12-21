@@ -509,6 +509,81 @@ export function AnalysisResults({ results }: AnalysisResultsProps) {
         </motion.div>
       )}
       
+      {/* Score Summary Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.45 }}
+        className="bg-card rounded-2xl border border-border shadow-card p-6"
+      >
+        <h3 className="text-lg font-display font-semibold text-foreground mb-6">
+          Score Summary
+        </h3>
+        <div className="space-y-4">
+          {categories.map((category, idx) => (
+            <div key={category.name} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
+                    {category.icon}
+                  </div>
+                  <span className="font-medium text-foreground text-sm">{category.name}</span>
+                </div>
+                <span className={cn(
+                  "text-sm font-bold",
+                  category.score >= 8 ? "text-success" :
+                  category.score >= 6 ? "text-gold" :
+                  category.score >= 4 ? "text-warning" : "text-destructive"
+                )}>
+                  {category.score.toFixed(1)}/10
+                </span>
+              </div>
+              <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(category.score / 10) * 100}%` }}
+                  transition={{ duration: 0.8, delay: 0.5 + idx * 0.1, ease: "easeOut" }}
+                  className={cn(
+                    "absolute left-0 top-0 h-full rounded-full",
+                    category.score >= 8 ? "bg-success" :
+                    category.score >= 6 ? "bg-gold" :
+                    category.score >= 4 ? "bg-warning" : "bg-destructive"
+                  )}
+                />
+              </div>
+            </div>
+          ))}
+          
+          {/* Overall Score Bar */}
+          <div className="pt-4 mt-4 border-t border-border space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-foreground">Overall Score</span>
+              <span className={cn(
+                "text-lg font-bold",
+                ((results.voiceModulation.score + results.thoughtStructure.score + results.vocabulary.score) / 3) >= 8 ? "text-success" :
+                ((results.voiceModulation.score + results.thoughtStructure.score + results.vocabulary.score) / 3) >= 6 ? "text-gold" :
+                ((results.voiceModulation.score + results.thoughtStructure.score + results.vocabulary.score) / 3) >= 4 ? "text-warning" : "text-destructive"
+              )}>
+                {((results.voiceModulation.score + results.thoughtStructure.score + results.vocabulary.score) / 3).toFixed(1)}/10
+              </span>
+            </div>
+            <div className="relative h-4 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${((results.voiceModulation.score + results.thoughtStructure.score + results.vocabulary.score) / 30) * 100}%` }}
+                transition={{ duration: 1, delay: 0.8, ease: "easeOut" }}
+                className={cn(
+                  "absolute left-0 top-0 h-full rounded-full bg-gradient-to-r",
+                  ((results.voiceModulation.score + results.thoughtStructure.score + results.vocabulary.score) / 3) >= 8 ? "from-success/80 to-success" :
+                  ((results.voiceModulation.score + results.thoughtStructure.score + results.vocabulary.score) / 3) >= 6 ? "from-gold/80 to-gold" :
+                  ((results.voiceModulation.score + results.thoughtStructure.score + results.vocabulary.score) / 3) >= 4 ? "from-warning/80 to-warning" : "from-destructive/80 to-destructive"
+                )}
+              />
+            </div>
+          </div>
+        </div>
+      </motion.div>
+      
       {/* Timestamped Feedback */}
       {results.timestampedFeedback && results.timestampedFeedback.length > 0 && (
         <motion.div

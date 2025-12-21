@@ -71,11 +71,23 @@ export function AnalysisHistory({ onSelectAnalysis, refreshTrigger }: AnalysisHi
   };
 
   const handleSelect = (analysis: AnalysisHistoryItem) => {
+    const categories = analysis.categories || {};
+    // Reconstruct the full analysis structure from stored categories
     onSelectAnalysis({
-      overallScore: analysis.overall_score,
+      voiceModulation: categories.voiceModulation || { score: 0 },
+      thoughtStructure: categories.thoughtStructure || { score: 0 },
+      vocabulary: categories.vocabulary || { score: 0 },
+      proficiencyLevel: categories.proficiencyLevel || 'Beginner',
+      summary: categories.summary || 'Analysis loaded from history.',
       fullTranscript: analysis.full_transcript,
-      categories: analysis.categories,
       mispronunciations: (analysis as any).mispronunciations || [],
+      wordsPerMinute: categories.wordsPerMinute,
+      totalWords: categories.totalWords,
+      durationSeconds: categories.durationSeconds,
+      timestampedFeedback: categories.timestampedFeedback || [],
+      strengths: categories.strengths || [],
+      developmentAreas: categories.developmentAreas || [],
+      drillSuggestion: categories.drillSuggestion,
     });
   };
 
