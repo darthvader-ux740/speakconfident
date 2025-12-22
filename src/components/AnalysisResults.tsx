@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { Mic, Brain, BookOpen, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Lightbulb, Clock, Award, FileText } from 'lucide-react';
+import { Mic, Brain, BookOpen, ChevronDown, ChevronUp, TrendingUp, AlertCircle, Lightbulb, Clock, Award, FileText, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { PROFICIENCY_LEVELS } from './RankingCriteria';
-
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 interface SubParameter {
   name: string;
   score: number;
@@ -519,40 +519,101 @@ export function AnalysisResults({ results }: AnalysisResultsProps) {
         <h3 className="text-lg font-display font-semibold text-foreground mb-6">
           Score Summary
         </h3>
-        <div className="space-y-4">
-          {categories.map((category, idx) => (
-            <div key={category.name} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
-                    {category.icon}
-                  </div>
-                  <span className="font-medium text-foreground text-sm">{category.name}</span>
+        <div className="space-y-3">
+          {categories.map((category, idx) => {
+            const categoryId = category.name.toLowerCase().replace(/\s+/g, '-');
+            
+            return (
+              <Collapsible key={category.name} defaultOpen={false}>
+                <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
+                  {/* Main Category Header */}
+                  <CollapsibleTrigger className="w-full">
+                    <div className="p-4 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
+                            {category.icon}
+                          </div>
+                          <span className="font-medium text-foreground">{category.name}</span>
+                          <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={cn(
+                            "text-sm font-bold",
+                            category.score >= 8 ? "text-success" :
+                            category.score >= 6 ? "text-gold" :
+                            category.score >= 4 ? "text-warning" : "text-destructive"
+                          )}>
+                            {category.score.toFixed(1)}/10
+                          </span>
+                        </div>
+                      </div>
+                      <div className="relative h-2.5 bg-muted rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(category.score / 10) * 100}%` }}
+                          transition={{ duration: 0.8, delay: 0.5 + idx * 0.1, ease: "easeOut" }}
+                          className={cn(
+                            "absolute left-0 top-0 h-full rounded-full",
+                            category.score >= 8 ? "bg-success" :
+                            category.score >= 6 ? "bg-gold" :
+                            category.score >= 4 ? "bg-warning" : "bg-destructive"
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  
+                  {/* Sub-parameters */}
+                  <CollapsibleContent>
+                    <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border/50">
+                      {category.subParameters.map((param, paramIdx) => (
+                        <div key={param.name} className="pl-11">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm text-muted-foreground">{param.name}</span>
+                            <span className={cn(
+                              "text-xs font-semibold",
+                              param.score >= 8 ? "text-success" :
+                              param.score >= 6 ? "text-gold" :
+                              param.score >= 4 ? "text-warning" : "text-destructive"
+                            )}>
+                              {param.score.toFixed(1)}
+                            </span>
+                          </div>
+                          <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(param.score / 10) * 100}%` }}
+                              transition={{ duration: 0.6, delay: 0.6 + idx * 0.1 + paramIdx * 0.05, ease: "easeOut" }}
+                              className={cn(
+                                "absolute left-0 top-0 h-full rounded-full",
+                                param.score >= 8 ? "bg-success/70" :
+                                param.score >= 6 ? "bg-gold/70" :
+                                param.score >= 4 ? "bg-warning/70" : "bg-destructive/70"
+                              )}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Link to detailed section */}
+                      <a 
+                        href={`#category-${categoryId}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          document.getElementById(`category-${categoryId}`)?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="flex items-center gap-1.5 pl-11 pt-2 text-xs text-gold hover:text-gold/80 transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        View detailed analysis
+                      </a>
+                    </div>
+                  </CollapsibleContent>
                 </div>
-                <span className={cn(
-                  "text-sm font-bold",
-                  category.score >= 8 ? "text-success" :
-                  category.score >= 6 ? "text-gold" :
-                  category.score >= 4 ? "text-warning" : "text-destructive"
-                )}>
-                  {category.score.toFixed(1)}/10
-                </span>
-              </div>
-              <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(category.score / 10) * 100}%` }}
-                  transition={{ duration: 0.8, delay: 0.5 + idx * 0.1, ease: "easeOut" }}
-                  className={cn(
-                    "absolute left-0 top-0 h-full rounded-full",
-                    category.score >= 8 ? "bg-success" :
-                    category.score >= 6 ? "bg-gold" :
-                    category.score >= 4 ? "bg-warning" : "bg-destructive"
-                  )}
-                />
-              </div>
-            </div>
-          ))}
+              </Collapsible>
+            );
+          })}
           
           {/* Overall Score Bar */}
           <div className="pt-4 mt-4 border-t border-border space-y-2">
@@ -627,7 +688,9 @@ export function AnalysisResults({ results }: AnalysisResultsProps) {
       {/* Category Cards */}
       <div className="space-y-4">
         {categories.map((category, idx) => (
-          <CategoryCard key={category.name} category={category} delay={0.7 + idx * 0.2} />
+          <div key={category.name} id={`category-${category.name.toLowerCase().replace(/\s+/g, '-')}`}>
+            <CategoryCard category={category} delay={0.7 + idx * 0.2} />
+          </div>
         ))}
       </div>
     </div>
