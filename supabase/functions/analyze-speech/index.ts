@@ -346,72 +346,65 @@ BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording.`
     
     // Helper function to clean and fix truncated JSON
     const cleanAndParseJSON = (jsonStr: string): any => {
-      // Remove any markdown code block markers
-      let cleaned = jsonStr.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+      console.log('Attempting to parse JSON of length:', jsonStr.length);
       
-      // Fix common issues with AI-generated JSON
+      // Remove any markdown code block markers
+      let cleaned = jsonStr.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      
+      // Try to parse as-is first (most reliable)
+      try {
+        return JSON.parse(cleaned);
+      } catch (firstError) {
+        console.log('First parse attempt failed:', (firstError as Error).message);
+      }
+      
       // Remove trailing commas before closing braces/brackets
       cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1');
       
-      // Fix unescaped quotes in strings (common issue)
-      // This is a simplified fix - replaces unescaped newlines in strings
-      cleaned = cleaned.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
-      
-      // Try to parse as-is first
       try {
         return JSON.parse(cleaned);
-      } catch (e) {
-        // If parsing fails, try to find the last complete object
-        console.log('Initial parse failed, attempting to fix truncated JSON...');
-        
-        // Count braces to find where JSON might be truncated
-        let braceCount = 0;
-        let lastValidIndex = 0;
-        
-        for (let i = 0; i < cleaned.length; i++) {
-          if (cleaned[i] === '{') braceCount++;
-          if (cleaned[i] === '}') {
-            braceCount--;
-            if (braceCount === 0) {
-              lastValidIndex = i + 1;
-              break;
-            }
-          }
-        }
-        
-        if (lastValidIndex > 0) {
-          const truncatedJson = cleaned.substring(0, lastValidIndex);
-          try {
-            return JSON.parse(truncatedJson);
-          } catch (e2) {
-            // Try adding closing braces if still unbalanced
-            let fixedJson = cleaned;
-            let openBraces = (fixedJson.match(/{/g) || []).length;
-            let closeBraces = (fixedJson.match(/}/g) || []).length;
-            
-            // Add missing closing braces
-            while (closeBraces < openBraces) {
-              // Remove any trailing incomplete content after last comma
-              fixedJson = fixedJson.replace(/,\s*"[^"]*"?\s*:?\s*[^,}]*$/, '');
-              fixedJson += '}';
-              closeBraces++;
-            }
-            
-            // Also balance brackets
-            let openBrackets = (fixedJson.match(/\[/g) || []).length;
-            let closeBrackets = (fixedJson.match(/\]/g) || []).length;
-            while (closeBrackets < openBrackets) {
-              fixedJson = fixedJson.replace(/,\s*$/, '');
-              fixedJson += ']';
-              closeBrackets++;
-            }
-            
-            return JSON.parse(fixedJson);
-          }
-        }
-        
-        throw e;
+      } catch (secondError) {
+        console.log('Second parse attempt failed:', (secondError as Error).message);
       }
+      
+      // Try to extract just the outermost JSON object
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace > firstBrace) {
+        const extracted = cleaned.substring(firstBrace, lastBrace + 1);
+        try {
+          return JSON.parse(extracted);
+        } catch (thirdError) {
+          console.log('Third parse attempt failed:', (thirdError as Error).message);
+        }
+      }
+      
+      // Final attempt: try to balance braces
+      let fixedJson = cleaned;
+      const openBraces = (fixedJson.match(/{/g) || []).length;
+      const closeBraces = (fixedJson.match(/}/g) || []).length;
+      const openBrackets = (fixedJson.match(/\[/g) || []).length;
+      const closeBrackets = (fixedJson.match(/]/g) || []).length;
+      
+      console.log('Brace count - open:', openBraces, 'close:', closeBraces);
+      console.log('Bracket count - open:', openBrackets, 'close:', closeBrackets);
+      
+      // Remove incomplete trailing content
+      fixedJson = fixedJson.replace(/,\s*"[^"]*"?\s*:?\s*("[^"]*)?$/, '');
+      
+      // Add missing closing brackets
+      for (let i = 0; i < openBrackets - closeBrackets; i++) {
+        fixedJson += ']';
+      }
+      
+      // Add missing closing braces
+      for (let i = 0; i < openBraces - closeBraces; i++) {
+        fixedJson += '}';
+      }
+      
+      console.log('Fixed JSON length:', fixedJson.length);
+      return JSON.parse(fixedJson);
     };
     
     // Extract and parse JSON from the response with proper error handling
