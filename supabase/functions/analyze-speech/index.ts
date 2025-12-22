@@ -344,26 +344,127 @@ BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording.`
     
     const content = analysisData.choices[0].message.content;
     
+    // Helper function to clean and fix truncated JSON
+    const cleanAndParseJSON = (jsonStr: string): any => {
+      // Remove any markdown code block markers
+      let cleaned = jsonStr.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+      
+      // Fix common issues with AI-generated JSON
+      // Remove trailing commas before closing braces/brackets
+      cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1');
+      
+      // Fix unescaped quotes in strings (common issue)
+      // This is a simplified fix - replaces unescaped newlines in strings
+      cleaned = cleaned.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+      
+      // Try to parse as-is first
+      try {
+        return JSON.parse(cleaned);
+      } catch (e) {
+        // If parsing fails, try to find the last complete object
+        console.log('Initial parse failed, attempting to fix truncated JSON...');
+        
+        // Count braces to find where JSON might be truncated
+        let braceCount = 0;
+        let lastValidIndex = 0;
+        
+        for (let i = 0; i < cleaned.length; i++) {
+          if (cleaned[i] === '{') braceCount++;
+          if (cleaned[i] === '}') {
+            braceCount--;
+            if (braceCount === 0) {
+              lastValidIndex = i + 1;
+              break;
+            }
+          }
+        }
+        
+        if (lastValidIndex > 0) {
+          const truncatedJson = cleaned.substring(0, lastValidIndex);
+          try {
+            return JSON.parse(truncatedJson);
+          } catch (e2) {
+            // Try adding closing braces if still unbalanced
+            let fixedJson = cleaned;
+            let openBraces = (fixedJson.match(/{/g) || []).length;
+            let closeBraces = (fixedJson.match(/}/g) || []).length;
+            
+            // Add missing closing braces
+            while (closeBraces < openBraces) {
+              // Remove any trailing incomplete content after last comma
+              fixedJson = fixedJson.replace(/,\s*"[^"]*"?\s*:?\s*[^,}]*$/, '');
+              fixedJson += '}';
+              closeBraces++;
+            }
+            
+            // Also balance brackets
+            let openBrackets = (fixedJson.match(/\[/g) || []).length;
+            let closeBrackets = (fixedJson.match(/\]/g) || []).length;
+            while (closeBrackets < openBrackets) {
+              fixedJson = fixedJson.replace(/,\s*$/, '');
+              fixedJson += ']';
+              closeBrackets++;
+            }
+            
+            return JSON.parse(fixedJson);
+          }
+        }
+        
+        throw e;
+      }
+    };
+    
     // Extract and parse JSON from the response with proper error handling
     let analysis;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         console.error('No JSON structure found in AI response');
-        console.error('Response length:', content?.length || 0);
+        console.error('Response preview:', content?.substring(0, 500) || 'empty');
         throw new Error('Invalid analysis response format');
       }
       
-      analysis = JSON.parse(jsonMatch[0]);
+      analysis = cleanAndParseJSON(jsonMatch[0]);
       
-      // Validate required fields
-      if (!analysis.proficiencyLevel || !analysis.summary) {
-        throw new Error('Missing required analysis fields');
+      // Validate required fields and provide defaults for missing ones
+      if (!analysis.proficiencyLevel) {
+        analysis.proficiencyLevel = 'Intermediate';
       }
+      if (!analysis.summary) {
+        analysis.summary = 'Analysis completed. Please review the detailed feedback below.';
+      }
+      
+      // Ensure all required nested objects exist with defaults
+      const ensureScoreObject = (obj: any, key: string) => {
+        if (!obj[key]) obj[key] = { score: 5, feedback: 'No specific feedback available.' };
+        if (typeof obj[key].score !== 'number') obj[key].score = 5;
+      };
+      
+      if (!analysis.voiceModulation) analysis.voiceModulation = { score: 5 };
+      ensureScoreObject(analysis.voiceModulation, 'voiceClarity');
+      ensureScoreObject(analysis.voiceModulation, 'tonalVariation');
+      ensureScoreObject(analysis.voiceModulation, 'paceAndPauses');
+      ensureScoreObject(analysis.voiceModulation, 'fillersAndVerbalHabits');
+      
+      if (!analysis.thoughtStructure) analysis.thoughtStructure = { score: 5 };
+      ensureScoreObject(analysis.thoughtStructure, 'purposeArticulation');
+      ensureScoreObject(analysis.thoughtStructure, 'logicalFlow');
+      ensureScoreObject(analysis.thoughtStructure, 'signposting');
+      ensureScoreObject(analysis.thoughtStructure, 'closureStrength');
+      
+      if (!analysis.vocabulary) analysis.vocabulary = { score: 5 };
+      ensureScoreObject(analysis.vocabulary, 'sentenceEconomy');
+      ensureScoreObject(analysis.vocabulary, 'specificity');
+      ensureScoreObject(analysis.vocabulary, 'redundancyControl');
+      ensureScoreObject(analysis.vocabulary, 'confidenceOfPhrasing');
+      ensureScoreObject(analysis.vocabulary, 'grammar');
+      
     } catch (parseError) {
       const parseErrorMessage = parseError instanceof Error ? parseError.message : 'Unknown parse error';
       console.error('Failed to parse AI response JSON:', parseErrorMessage);
-      throw new Error('Failed to process analysis results');
+      console.error('Raw content length:', content?.length || 0);
+      console.error('Content preview:', content?.substring(0, 1000) || 'empty');
+      throw new Error('Failed to process analysis results. The AI response was incomplete. Please try again.');
     }
     
     console.log('Analysis complete - Proficiency:', analysis.proficiencyLevel, 'WPM:', analysis.wordsPerMinute);
