@@ -19,12 +19,22 @@ interface Profile {
 
 interface AnalysisData {
   date: string;
-  voiceClarity: number;
-  speechStructure: number;
-  vocabulary: number;
-  audienceConnection: number;
-  emotionalDelivery: number;
   overall: number;
+  // Voice Modulation sub-parameters
+  voiceClarity: number;
+  tonalVariation: number;
+  paceAndPauses: number;
+  fillersAndHabits: number;
+  // Thought Structure sub-parameters
+  purposeArticulation: number;
+  logicalFlow: number;
+  signposting: number;
+  closureStrength: number;
+  // Vocabulary sub-parameters
+  wordChoice: number;
+  grammarAccuracy: number;
+  sentenceConstruction: number;
+  contextualFit: number;
 }
 
 const Profile = () => {
@@ -90,17 +100,31 @@ const Profile = () => {
     if (data) {
       const formattedData: AnalysisData[] = data.map((analysis) => {
         const categories = analysis.categories as any;
+        const voiceMod = categories?.voiceModulation || {};
+        const thoughtStr = categories?.thoughtStructure || {};
+        const vocab = categories?.vocabulary || {};
+        
         return {
           date: new Date(analysis.created_at).toLocaleDateString('en-US', { 
             month: 'short', 
             day: 'numeric' 
           }),
-          voiceClarity: categories?.voiceModulation?.voiceClarity?.score || categories?.voiceModulation?.score || 0,
-          speechStructure: categories?.thoughtStructure?.score || 0,
-          vocabulary: categories?.vocabulary?.score || 0,
-          audienceConnection: categories?.thoughtStructure?.logicalFlow?.score || 0,
-          emotionalDelivery: categories?.voiceModulation?.tonalVariation?.score || 0,
           overall: analysis.overall_score,
+          // Voice Modulation sub-parameters
+          voiceClarity: voiceMod?.voiceClarity?.score || 0,
+          tonalVariation: voiceMod?.tonalVariation?.score || 0,
+          paceAndPauses: voiceMod?.paceAndPauses?.score || 0,
+          fillersAndHabits: voiceMod?.fillersAndHabits?.score || 0,
+          // Thought Structure sub-parameters
+          purposeArticulation: thoughtStr?.purposeArticulation?.score || 0,
+          logicalFlow: thoughtStr?.logicalFlow?.score || 0,
+          signposting: thoughtStr?.signposting?.score || 0,
+          closureStrength: thoughtStr?.closureStrength?.score || 0,
+          // Vocabulary sub-parameters
+          wordChoice: vocab?.wordChoice?.score || 0,
+          grammarAccuracy: vocab?.grammarAccuracy?.score || 0,
+          sentenceConstruction: vocab?.sentenceConstruction?.score || 0,
+          contextualFit: vocab?.contextualFit?.score || 0,
         };
       });
       setAnalyticsData(formattedData);
@@ -144,12 +168,22 @@ const Profile = () => {
   }
 
   const chartColors = {
-    voiceClarity: 'hsl(220, 45%, 20%)',
-    speechStructure: 'hsl(38, 92%, 50%)',
-    vocabulary: 'hsl(145, 65%, 42%)',
-    audienceConnection: 'hsl(280, 60%, 50%)',
-    emotionalDelivery: 'hsl(200, 80%, 50%)',
     overall: 'hsl(0, 72%, 55%)',
+    // Voice Modulation colors
+    voiceClarity: 'hsl(220, 70%, 50%)',
+    tonalVariation: 'hsl(200, 80%, 50%)',
+    paceAndPauses: 'hsl(180, 70%, 45%)',
+    fillersAndHabits: 'hsl(160, 60%, 45%)',
+    // Thought Structure colors
+    purposeArticulation: 'hsl(38, 92%, 50%)',
+    logicalFlow: 'hsl(25, 85%, 55%)',
+    signposting: 'hsl(45, 90%, 48%)',
+    closureStrength: 'hsl(55, 80%, 45%)',
+    // Vocabulary colors
+    wordChoice: 'hsl(145, 65%, 42%)',
+    grammarAccuracy: 'hsl(130, 55%, 50%)',
+    sentenceConstruction: 'hsl(100, 50%, 45%)',
+    contextualFit: 'hsl(80, 60%, 40%)',
   };
 
   return (
@@ -295,10 +329,10 @@ const Profile = () => {
                     </div>
                   </div>
 
-                  {/* All Parameters Chart */}
+                  {/* Voice Modulation Chart */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-4 text-foreground">Parameter Breakdown</h3>
-                    <div className="h-80">
+                    <h3 className="text-lg font-semibold mb-4 text-foreground">Voice Modulation</h3>
+                    <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={analyticsData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -318,39 +352,139 @@ const Profile = () => {
                             stroke={chartColors.voiceClarity}
                             strokeWidth={2}
                             dot={{ fill: chartColors.voiceClarity }}
-                            name="Voice Clarity"
+                            name="Voice Clarity & Projection"
                           />
                           <Line 
                             type="monotone" 
-                            dataKey="speechStructure" 
-                            stroke={chartColors.speechStructure}
+                            dataKey="tonalVariation" 
+                            stroke={chartColors.tonalVariation}
                             strokeWidth={2}
-                            dot={{ fill: chartColors.speechStructure }}
-                            name="Speech Structure"
+                            dot={{ fill: chartColors.tonalVariation }}
+                            name="Tonal Variation"
                           />
                           <Line 
                             type="monotone" 
-                            dataKey="vocabulary" 
-                            stroke={chartColors.vocabulary}
+                            dataKey="paceAndPauses" 
+                            stroke={chartColors.paceAndPauses}
                             strokeWidth={2}
-                            dot={{ fill: chartColors.vocabulary }}
-                            name="Vocabulary"
+                            dot={{ fill: chartColors.paceAndPauses }}
+                            name="Pace & Pauses"
                           />
                           <Line 
                             type="monotone" 
-                            dataKey="audienceConnection" 
-                            stroke={chartColors.audienceConnection}
+                            dataKey="fillersAndHabits" 
+                            stroke={chartColors.fillersAndHabits}
                             strokeWidth={2}
-                            dot={{ fill: chartColors.audienceConnection }}
-                            name="Audience Connection"
+                            dot={{ fill: chartColors.fillersAndHabits }}
+                            name="Fillers & Verbal Habits"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Thought Structure Chart */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-foreground">Thought Structure</h3>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={analyticsData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                          <YAxis domain={[0, 10]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--card))', 
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px'
+                            }}
+                          />
+                          <Legend />
+                          <Line 
+                            type="monotone" 
+                            dataKey="purposeArticulation" 
+                            stroke={chartColors.purposeArticulation}
+                            strokeWidth={2}
+                            dot={{ fill: chartColors.purposeArticulation }}
+                            name="Purpose Articulation"
                           />
                           <Line 
                             type="monotone" 
-                            dataKey="emotionalDelivery" 
-                            stroke={chartColors.emotionalDelivery}
+                            dataKey="logicalFlow" 
+                            stroke={chartColors.logicalFlow}
                             strokeWidth={2}
-                            dot={{ fill: chartColors.emotionalDelivery }}
-                            name="Emotional Delivery"
+                            dot={{ fill: chartColors.logicalFlow }}
+                            name="Logical Flow"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="signposting" 
+                            stroke={chartColors.signposting}
+                            strokeWidth={2}
+                            dot={{ fill: chartColors.signposting }}
+                            name="Signposting"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="closureStrength" 
+                            stroke={chartColors.closureStrength}
+                            strokeWidth={2}
+                            dot={{ fill: chartColors.closureStrength }}
+                            name="Closure Strength"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Vocabulary Chart */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-foreground">Vocabulary</h3>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={analyticsData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                          <YAxis domain={[0, 10]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--card))', 
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px'
+                            }}
+                          />
+                          <Legend />
+                          <Line 
+                            type="monotone" 
+                            dataKey="wordChoice" 
+                            stroke={chartColors.wordChoice}
+                            strokeWidth={2}
+                            dot={{ fill: chartColors.wordChoice }}
+                            name="Word Choice"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="grammarAccuracy" 
+                            stroke={chartColors.grammarAccuracy}
+                            strokeWidth={2}
+                            dot={{ fill: chartColors.grammarAccuracy }}
+                            name="Grammar Accuracy"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="sentenceConstruction" 
+                            stroke={chartColors.sentenceConstruction}
+                            strokeWidth={2}
+                            dot={{ fill: chartColors.sentenceConstruction }}
+                            name="Sentence Construction"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="contextualFit" 
+                            stroke={chartColors.contextualFit}
+                            strokeWidth={2}
+                            dot={{ fill: chartColors.contextualFit }}
+                            name="Contextual Fit"
                           />
                         </LineChart>
                       </ResponsiveContainer>
