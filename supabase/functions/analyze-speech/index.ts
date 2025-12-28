@@ -120,7 +120,7 @@ serve(async (req) => {
     }
 
     // STEP 1: Use Groq Whisper for high-quality transcription
-    console.log('Step 1: Transcribing audio with Groq Whisper...');
+    console.log('Step 1: Transcribing audio with Groq Whisper V3 Turbo...');
     
     // Convert base64 to binary for Groq
     const audioBuffer = Uint8Array.from(atob(audio), c => c.charCodeAt(0));
