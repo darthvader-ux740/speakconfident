@@ -468,9 +468,17 @@ BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording.`
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     console.error('Error in analyze-speech function:', error);
+    console.error('Error message:', errorMessage);
+    console.error('Error stack:', errorStack);
+    
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: errorMessage,
+        stack: errorStack,
+        type: error?.constructor?.name || 'Unknown'
+      }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

@@ -108,9 +108,26 @@ export default function Index() {
       
     } catch (error: any) {
       console.error('Error analyzing speech:', error);
+      console.error('Full error object:', JSON.stringify(error, null, 2));
+      
+      let errorMessage = "Failed to analyze your speech. Please try again.";
+      
+      // Try to extract error from various possible locations
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      if (error.context?.body?.error) {
+        errorMessage = error.context.body.error;
+      }
+      if (data?.error) {
+        errorMessage = data.error;
+      }
+      
+      console.error('Displaying error:', errorMessage);
+      
       toast({
         title: "Analysis Failed",
-        description: error.message || "Failed to analyze your speech. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
       setIsProcessing(false);
