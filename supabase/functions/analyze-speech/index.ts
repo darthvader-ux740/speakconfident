@@ -336,7 +336,18 @@ BE HONEST AND ACCURATE. Base ALL feedback on ACTUAL content from the recording.`
     if (!analysisResponse.ok) {
       const errorText = await analysisResponse.text();
       console.error('AI analysis error:', analysisResponse.status, errorText);
-      throw new Error(`Failed to analyze speech: ${errorText}`);
+      
+      // Check if it's a service outage
+      if (analysisResponse.status === 503 || errorText.includes('Temporarily unavailable')) {
+        throw new Error('The AI service is temporarily unavailable. Please try again in a few minutes.');
+      }
+      
+      // Check if it's a rate limit
+      if (analysisResponse.status === 429) {
+        throw new Error('Too many requests. Please wait a moment and try again.');
+      }
+      
+      throw new Error(`AI service error (${analysisResponse.status}). Please try again.`);
     }
 
     const analysisData = await analysisResponse.json();

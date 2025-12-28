@@ -31,10 +31,11 @@ interface AnalysisData {
   signposting: number;
   closureStrength: number;
   // Vocabulary sub-parameters
-  wordChoice: number;
-  grammarAccuracy: number;
-  sentenceConstruction: number;
-  contextualFit: number;
+  sentenceEconomy: number;
+  specificity: number;
+  redundancyControl: number;
+  confidenceOfPhrasing: number;
+  grammar: number;
 }
 
 const Profile = () => {
@@ -121,10 +122,11 @@ const Profile = () => {
           signposting: thoughtStr?.signposting?.score || 0,
           closureStrength: thoughtStr?.closureStrength?.score || 0,
           // Vocabulary sub-parameters
-          wordChoice: vocab?.wordChoice?.score || 0,
-          grammarAccuracy: vocab?.grammarAccuracy?.score || 0,
-          sentenceConstruction: vocab?.sentenceConstruction?.score || 0,
-          contextualFit: vocab?.contextualFit?.score || 0,
+          sentenceEconomy: vocab?.sentenceEconomy?.score || 0,
+          specificity: vocab?.specificity?.score || 0,
+          redundancyControl: vocab?.redundancyControl?.score || 0,
+          confidenceOfPhrasing: vocab?.confidenceOfPhrasing?.score || 0,
+          grammar: vocab?.grammar?.score || 0,
         };
       });
       setAnalyticsData(formattedData);
@@ -180,10 +182,11 @@ const Profile = () => {
     signposting: 'hsl(45, 90%, 48%)',
     closureStrength: 'hsl(55, 80%, 45%)',
     // Vocabulary colors
-    wordChoice: 'hsl(145, 65%, 42%)',
-    grammarAccuracy: 'hsl(130, 55%, 50%)',
-    sentenceConstruction: 'hsl(100, 50%, 45%)',
-    contextualFit: 'hsl(80, 60%, 40%)',
+    sentenceEconomy: 'hsl(145, 65%, 42%)',
+    specificity: 'hsl(130, 55%, 50%)',
+    redundancyControl: 'hsl(100, 50%, 45%)',
+    confidenceOfPhrasing: 'hsl(120, 60%, 40%)',
+    grammar: 'hsl(80, 60%, 40%)',
   };
 
   return (
@@ -456,35 +459,43 @@ const Profile = () => {
                           <Legend />
                           <Line 
                             type="monotone" 
-                            dataKey="wordChoice" 
-                            stroke={chartColors.wordChoice}
+                            dataKey="sentenceEconomy" 
+                            stroke={chartColors.sentenceEconomy}
                             strokeWidth={2}
-                            dot={{ fill: chartColors.wordChoice }}
-                            name="Word Choice"
+                            dot={{ fill: chartColors.sentenceEconomy }}
+                            name="Sentence Economy"
                           />
                           <Line 
                             type="monotone" 
-                            dataKey="grammarAccuracy" 
-                            stroke={chartColors.grammarAccuracy}
+                            dataKey="specificity" 
+                            stroke={chartColors.specificity}
                             strokeWidth={2}
-                            dot={{ fill: chartColors.grammarAccuracy }}
-                            name="Grammar Accuracy"
+                            dot={{ fill: chartColors.specificity }}
+                            name="Specificity"
                           />
                           <Line 
                             type="monotone" 
-                            dataKey="sentenceConstruction" 
-                            stroke={chartColors.sentenceConstruction}
+                            dataKey="redundancyControl" 
+                            stroke={chartColors.redundancyControl}
                             strokeWidth={2}
-                            dot={{ fill: chartColors.sentenceConstruction }}
-                            name="Sentence Construction"
+                            dot={{ fill: chartColors.redundancyControl }}
+                            name="Redundancy Control"
                           />
                           <Line 
                             type="monotone" 
-                            dataKey="contextualFit" 
-                            stroke={chartColors.contextualFit}
+                            dataKey="confidenceOfPhrasing" 
+                            stroke={chartColors.confidenceOfPhrasing}
                             strokeWidth={2}
-                            dot={{ fill: chartColors.contextualFit }}
-                            name="Contextual Fit"
+                            dot={{ fill: chartColors.confidenceOfPhrasing }}
+                            name="Confidence of Phrasing"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="grammar" 
+                            stroke={chartColors.grammar}
+                            strokeWidth={2}
+                            dot={{ fill: chartColors.grammar }}
+                            name="Grammar"
                           />
                         </LineChart>
                       </ResponsiveContainer>

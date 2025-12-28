@@ -111,6 +111,7 @@ export default function Index() {
       console.error('Full error object:', JSON.stringify(error, null, 2));
       
       let errorMessage = "Failed to analyze your speech. Please try again.";
+      let errorTitle = "Analysis Failed";
       
       // Try to extract error from various possible locations
       if (error.message) {
@@ -123,10 +124,19 @@ export default function Index() {
         errorMessage = data.error;
       }
       
+      // Check for specific error types to provide better guidance
+      if (errorMessage.includes('temporarily unavailable') || errorMessage.includes('503')) {
+        errorTitle = "Service Temporarily Unavailable";
+        errorMessage = "The AI analysis service is temporarily down. Please try again in a few minutes.";
+      } else if (errorMessage.includes('429') || errorMessage.includes('Too many requests')) {
+        errorTitle = "Rate Limit Reached";
+        errorMessage = "Too many requests. Please wait a moment and try again.";
+      }
+      
       console.error('Displaying error:', errorMessage);
       
       toast({
-        title: "Analysis Failed",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive",
       });
